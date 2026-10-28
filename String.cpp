@@ -5,9 +5,14 @@ String requirements
 3. Assume little endian least significant byte store first then most significant byte
 */
 #include <bit>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <typeinfo>
 namespace viral {
 
     class String{
@@ -46,7 +51,8 @@ namespace viral {
         String(){
             //creates empty short string
             storage_.stack.size_tag = 1; //adding the tag, though size is 0;
-            storage_.stack.data[0] = '\0';
+            storage_.stack.data[0]='\0';
+
         }
 
         String(const char* str, std::size_t str_size){
@@ -108,5 +114,54 @@ namespace viral {
                 std::memcpy(storage_.stack.data, other.storage_.stack.data, other.size());
             }
         }
+
+        void print(){
+            if(is_heap()){
+                std::cout<<"Printing from heap: ";
+                std::cout<<storage_.heap.data<<std::endl;
+            }
+            else{
+                std::cout<<"Printing from stack: ";
+                for(int i=0; i<size(); i++){
+                    std::cout<<storage_.stack.data[i];
+                }
+                std::cout<<std::endl;
+            }
+        }
     };
+}
+
+int main(){
+    std::cout<<"Testing Viral String"<<std::endl;
+    std::cout<<"1. Empty String construction should be stack"<<std::endl;
+    viral::String str1{};
+    static_assert(sizeof(str1)==24, "1. size of string should be 23 bytes");
+    assert(str1.size()==0);
+    assert(str1.capacity()==23);
+    str1.print();
+    std::cout<<"2. Short String construction should be stack"<<std::endl;
+    viral::String str2{"HelloTwin!HelloTwin!"};
+    assert(str2.size()==20);
+    assert(str2.capacity()==23);
+    str2.print();
+    std::cout<<"3. Short String construction of size 23 should be stack"<<std::endl;
+    viral::String str3{"HelloTwin!HelloTwin!123"};
+    assert(str3.size()==23);
+    assert(str3.capacity()==23);
+    str3.print();
+    std::cout<<"4. long String construction of size 24 should be heap"<<std::endl;
+    viral::String str4{"HelloTwin!HelloTwin!1234"};
+    assert(str4.size()==24);
+    assert(str4.capacity()!=23);
+    str4.print();
+    std::cout<<"5. short String copy construction of size 23 less should be stack"<<std::endl;
+    viral::String str5{str3};
+    assert(str5.size()==23);
+    assert(str5.capacity()==23);
+    str5.print();
+    std::cout<<"6. long String copy construction of size 24 should be heap"<<std::endl;
+    viral::String str6{str4};
+    assert(str6.size()==24);
+    assert(str6.capacity()!=23);
+    str6.print();
 }
